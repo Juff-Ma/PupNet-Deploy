@@ -17,7 +17,7 @@
 		<Authors>Andy Thomas</Authors>
 		<Copyright>© Andy Thomas 2022-25</Copyright>
 		<Company>KuiperZone</Company>
-		<Description>Publish, Package and Deploy as: AppImage, Windows Setup, Flatpak, Deb, RPM and Zip</Description>
+		<Description>Publish, Package and Deploy as: AppImage, Windows Setup, MSI, Flatpak, Deb, RPM and Zip</Description>
 		<PackageTags>publish;pack;deploy;AppImage;flatpak;deb;rpm;setup;installer;linux;</PackageTags>
 		<Language>en-US</Language>
 		<PackageProjectUrl>https://github.com/kuiperzone/PupNet-Deploy</PackageProjectUrl>

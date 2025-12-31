@@ -54,6 +54,11 @@ public enum PackageKind
     /// Setup file. Windows only.
     /// </summary>
     Setup,
+
+    /// <summary>
+    /// Windows Installer. Windows only.
+    /// </summary>
+    Msi,
 }
 
 /// <summary>
@@ -74,6 +79,7 @@ public static class DeployKindExtension
             case PackageKind.Rpm: return ".rpm";
             case PackageKind.Flatpak: return ".flatpak";
             case PackageKind.Setup: return ".exe";
+            case PackageKind.Msi: return ".msi";
             default: throw new ArgumentException($"Invalid {nameof(PackageKind)} {kind}");
         }
     }
@@ -101,7 +107,7 @@ public static class DeployKindExtension
     /// </summary>
     public static bool TargetsWindows(this PackageKind kind, bool exclusive = false)
     {
-        if (kind == PackageKind.Zip || kind == PackageKind.Setup)
+        if (kind == PackageKind.Zip || kind == PackageKind.Setup || kind == PackageKind.Msi)
         {
             return !exclusive || (!TargetsLinux(kind) && !TargetsOsx(kind));
         }

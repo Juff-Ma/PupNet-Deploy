@@ -85,7 +85,6 @@ public class ConfigurationReader
             SetupUninstallScript = "uninstall.bat";
             MsiUuid = "cdd3abd4-3076-4d81-b531-339d7ad8b320";
             MsiMachineInstall = true;
-            MsiCommandPrompt = "MSI Command Prompt";
             MsiSuffixOutput = "Install";
             MsiVersionOutput = true;
             MsiCodeSignCertName = "MyCert.pfx";
@@ -207,7 +206,6 @@ public class ConfigurationReader
 
         MsiUuid = GetOptional(nameof(MsiUuid), ValueFlags.StrictSafe); // StrictSafe isn't necessarily meant for this but should work fine ig
         MsiMachineInstall = GetBool(nameof(MsiMachineInstall), SetupAdminInstall); // Usually MSIs are installed Machine wide by default, however we already have the option so reuse it
-        MsiCommandPrompt = GetOptional(nameof(MsiCommandPrompt), ValueFlags.Safe) ?? SetupCommandPrompt;
         MsiSuffixOutput = GetOptional(nameof(MsiSuffixOutput), ValueFlags.SafeNoSpace) ?? SetupSuffixOutput;
         MsiVersionOutput = GetBool(nameof(MsiVersionOutput), SetupVersionOutput);
         MsiHideProgramEntry = GetBool(nameof(MsiHideProgramEntry), MsiHideProgramEntry);
@@ -331,7 +329,6 @@ public class ConfigurationReader
 
     public string? MsiUuid { get; } // Uniquely identifies an MSI product, will be generated based on AppId if left unset.
     public bool MsiMachineInstall { get; }
-    public string? MsiCommandPrompt { get; }
     public string? MsiSuffixOutput { get; }
     public bool MsiVersionOutput { get; }
     public bool MsiHideProgramEntry { get; }
@@ -737,10 +734,6 @@ public class ConfigurationReader
                 $"Boolean (true or false) which specifies whether to install the application for all users (machine),",
                 $"or just the current user. Default is false (per-user). Although machine installation is more common.", $"" +
                 $"If {nameof(SetupAdminInstall)} is set but this isn't, then it will determine this too."));
-
-        sb.Append(CreateHelpField(nameof(MsiCommandPrompt), MsiCommandPrompt, style,
-                $"Same as {nameof(SetupCommandPrompt)} but for MSI.",
-                $"Will default to {nameof(SetupCommandPrompt)} if unset."));
 
         sb.Append(CreateHelpField(nameof(MsiSuffixOutput), MsiSuffixOutput, style,
                 $"Same as {nameof(SetupSuffixOutput)} but for MSI.",

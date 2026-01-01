@@ -37,6 +37,7 @@ public class BuilderFactory
             case PackageKind.Rpm: return new RpmBuilder(conf);
             case PackageKind.Deb: return new DebianBuilder(conf);
             case PackageKind.Setup: return new SetupBuilder(conf);
+            case PackageKind.Msi: return new MsiBuilder(conf);
             case PackageKind.Zip: return new ZipBuilder(conf);
             default: throw new ArgumentException($"Invalid or unsupported {nameof(PackageKind)} {conf.Arguments.Kind}");
         }

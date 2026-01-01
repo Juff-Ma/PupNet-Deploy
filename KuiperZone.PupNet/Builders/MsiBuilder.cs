@@ -16,7 +16,7 @@
 // with PupNet. If not, see <https://www.gnu.org/licenses/>.
 // -----------------------------------------------------------------------------
 
-// MsiBuilder created by Julian Rossbach.
+// MsiBuilder created by Julian Rossbach (httpS://github.com/Juff-Ma).
 
 namespace KuiperZone.PupNet.Builders;
 
@@ -26,32 +26,52 @@ namespace KuiperZone.PupNet.Builders;
 /// </summary>
 public class MsiBuilder : PackageBuilder
 {
-    private const string PromptBat = "CommandPrompt.bat";
-
     /// <summary>
     /// Constructor.
     /// </summary>
     public MsiBuilder(ConfigurationReader conf)
         : base(conf, PackageKind.Msi)
     {
-        throw new NotImplementedException();
+        BuildAppBin = Path.Combine(BuildRoot, "Publish");
+
+        // SimpleMSI automatically installs to Program Files/LocalAppData
+        // also user can define during installation
+        InstallBin = "";
+
+        ManifestBuildPath = Path.Combine(Root, Configuration.AppBaseName + ".msi.toml");
+        // TODO: set ManifestContent based on configuration
+
+        // TODO: set PackageCommands based on configuration
     }
 
-    public override string PackageArch => throw new NotImplementedException();
+    public override string PackageArch
+    {
+        get
+        {
+            if (Arguments.Arch != null)
+            {
+                return Arguments.Arch;
+            }
 
-    public override string OutputName => throw new NotImplementedException();
+            // This works for everything besides Arm32, which current .NET does not support anyway
+            return Runtime.BuildArch.ToString().ToLowerInvariant(); 
+        }
+    }
 
-    public override string BuildAppBin => throw new NotImplementedException();
+    public override string OutputName => GetOutputName(Configuration.MsiVersionOutput, Configuration.MsiSuffixOutput,
+                                                        PackageArch, ".msi");
 
-    public override string InstallBin => throw new NotImplementedException();
+    public override string BuildAppBin { get; }
 
-    public override string? ManifestContent => throw new NotImplementedException();
+    public override string InstallBin { get; }
 
-    public override string? ManifestBuildPath => throw new NotImplementedException();
+    public override string? ManifestContent { get; }
 
-    public override IReadOnlyCollection<string> PackageCommands => throw new NotImplementedException();
+    public override string? ManifestBuildPath { get; }
 
-    public override bool SupportsStartCommand => throw new NotImplementedException();
+    public override IReadOnlyCollection<string> PackageCommands { get; }
 
-    public override bool SupportsPostRun => throw new NotImplementedException();
+    public override bool SupportsStartCommand => true;
+
+    public override bool SupportsPostRun => false;
 }

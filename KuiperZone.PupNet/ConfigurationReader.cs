@@ -83,6 +83,19 @@ public class ConfigurationReader
             SetupSuffixOutput = "Setup";
             SetupVersionOutput = true;
             SetupUninstallScript = "uninstall.bat";
+            MsiUuid = "cdd3abd4-3076-4d81-b531-339d7ad8b320";
+            MsiMachineInstall = true;
+            MsiCommandPrompt = "MSI Command Prompt";
+            MsiSuffixOutput = "Install";
+            MsiVersionOutput = true;
+            MsiCodeSignCertName = "MyCert.pfx";
+            MsiCodeSignCertPassword = "v3rys3cur3";
+            MsiCodeSignDescription = "MyCompany MyApp";
+            MsiCodeSignStore = "pfx";
+            MsiCodeSignTimestampUrl = "http://timestamp.acs.microsoft.com";
+            MsiCodeSignEmbedded = true;
+            MsiSignToolLocation = "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x64\\";
+            MsiSignToolExtraArguments = "/sm";
         }
 
         if (!string.IsNullOrEmpty(metabase))
@@ -192,6 +205,21 @@ public class ConfigurationReader
         SetupVersionOutput = GetBool(nameof(SetupVersionOutput), SetupVersionOutput);
         SetupUninstallScript = GetOptional(nameof(SetupUninstallScript), ValueFlags.None);
 
+        MsiUuid = GetOptional(nameof(MsiUuid), ValueFlags.StrictSafe); // StrictSafe isn't necessarily meant for this but should work fine ig
+        MsiMachineInstall = GetBool(nameof(MsiMachineInstall), SetupAdminInstall); // Usually MSIs are installed Machine wide by default, however we already have the option so reuse it
+        MsiCommandPrompt = GetOptional(nameof(MsiCommandPrompt), ValueFlags.Safe) ?? SetupCommandPrompt;
+        MsiSuffixOutput = GetOptional(nameof(MsiSuffixOutput), ValueFlags.SafeNoSpace) ?? SetupSuffixOutput;
+        MsiVersionOutput = GetBool(nameof(MsiVersionOutput), SetupVersionOutput);
+        MsiHideProgramEntry = GetBool(nameof(MsiHideProgramEntry), MsiHideProgramEntry);
+        MsiCodeSignCertName = GetOptional(nameof(MsiCodeSignCertName), ValueFlags.Safe);
+        MsiCodeSignCertPassword = GetOptional(nameof(MsiCodeSignCertPassword), ValueFlags.None);
+        MsiCodeSignDescription = GetOptional(nameof(MsiCodeSignDescription), ValueFlags.Safe);
+        MsiCodeSignStore = GetOptional(nameof(MsiCodeSignStore), ValueFlags.SafeNoSpace);
+        MsiCodeSignTimestampUrl = GetOptional(nameof(MsiCodeSignTimestampUrl), ValueFlags.SafeNoSpace);
+        MsiCodeSignEmbedded = GetBool(nameof(MsiCodeSignEmbedded), MsiCodeSignEmbedded);
+        MsiSignToolLocation = GetOptional(nameof(MsiSignToolLocation), ValueFlags.Safe);
+        MsiSignToolExtraArguments = GetOptional(nameof(MsiSignToolExtraArguments), ValueFlags.None);
+
         // Not actually a key-value, but a comment
         PupnetVersion = ExtractVersion(reader.ToString());
 
@@ -300,6 +328,22 @@ public class ConfigurationReader
     public string? SetupSuffixOutput { get; }
     public bool SetupVersionOutput { get; }
     public string? SetupUninstallScript { get; }
+
+    public string? MsiUuid { get; } // Uniquely identifies an MSI product, will be generated based on AppId if left unset.
+    public bool MsiMachineInstall { get; }
+    public string? MsiCommandPrompt { get; }
+    public string? MsiSuffixOutput { get; }
+    public bool MsiVersionOutput { get; }
+    public bool MsiHideProgramEntry { get; }
+    // options for code signing MSI files
+    public string? MsiCodeSignCertName { get; }
+    public string? MsiCodeSignCertPassword { get; }
+    public string? MsiCodeSignDescription { get; }
+    public string? MsiCodeSignStore { get; } 
+    public string? MsiCodeSignTimestampUrl { get; }
+    public bool MsiCodeSignEmbedded { get; }
+    public string? MsiSignToolLocation { get; }
+    public string? MsiSignToolExtraArguments { get; }
 
     public string? PupnetVersion { get; }
 
@@ -679,6 +723,58 @@ public class ConfigurationReader
         sb.Append(CreateHelpField(nameof(SetupUninstallScript), SetupUninstallScript, style,
             $"Optional name of a script to run before uninstall with InnoSetup. The file is relative to the directory of the",
             $"application and must have a default file association. This binds to the `[UninstallRun]` section of InnoSetup."));
+
+
+
+        sb.Append(CreateBreaker("WINDOWS MSI OPTIONS", style));
+
+        sb.Append(CreateHelpField(nameof(MsiUuid), MsiUuid, style,
+                $"Optional UUID which uniquely identifies an MSI product. If empty, a UUID will be generated based on",
+                $"the {nameof(AppId)} value. It is important that this value remains constant for all versions of the",
+                $"application, otherwise Windows will treat updated packages as different products."));
+
+        sb.Append(CreateHelpField(nameof(MsiMachineInstall), MsiMachineInstall, style,
+                $"Boolean (true or false) which specifies whether to install the application for all users (machine),",
+                $"or just the current user. Default is false (per-user). Although machine installation is more common.", $"" +
+                $"If {nameof(SetupAdminInstall)} is set but this isn't, then it will determine this too."));
+
+        sb.Append(CreateHelpField(nameof(MsiCommandPrompt), MsiCommandPrompt, style,
+                $"Same as {nameof(SetupCommandPrompt)} but for MSI.",
+                $"Will default to {nameof(SetupCommandPrompt)} if unset."));
+
+        sb.Append(CreateHelpField(nameof(MsiSuffixOutput), MsiSuffixOutput, style,
+                $"Same as {nameof(SetupSuffixOutput)} but for MSI.",
+                $"Will default to {nameof(SetupSuffixOutput)} if unset."));
+
+        sb.Append(CreateHelpField(nameof(MsiVersionOutput), MsiVersionOutput, style,
+                $"Same as {nameof(SetupVersionOutput)} but for MSI.",
+                $"Will default to {nameof(SetupVersionOutput)} if unset."));
+
+        sb.Append(CreateHelpField(nameof(MsiHideProgramEntry), MsiHideProgramEntry, style,
+                $"Boolean (true or false) which specifies whether to hide the program entry in the Add or Remove Programs dialog.",
+                $"Even if set to true the program can still be uninstalled through other means, e.g. msiexec",
+                $"Default is false."));
+
+        sb.Append(CreateHelpField(nameof(MsiCodeSignCertName), MsiCodeSignCertName, style,
+            $"Name of the PFX file or Certificate Store ID of the Certificate to use for code signing."));
+        sb.Append(CreateHelpField(nameof(MsiCodeSignCertPassword), MsiCodeSignCertPassword, style,
+            $"Password of the PFX file, not required if using the cert store."));
+        sb.Append(CreateHelpField(nameof(MsiCodeSignDescription), MsiCodeSignDescription, style,
+            $"Description used for code signing the MSI, this will appear in the UAC prompt."));
+        sb.Append(CreateHelpField(nameof(MsiCodeSignStore), MsiCodeSignStore, style,
+            $"This determines where to find the certificate.",
+            $"May be 'pfx' for PFX files, 'name' for common name ID or 'sha1' for their hash ID."));
+        sb.Append(CreateHelpField(nameof(MsiCodeSignTimestampUrl), MsiCodeSignTimestampUrl, style,
+            $"URL of the timestamp server to use when code signing the MSI.",
+            "If you omit this, signing will still work but Windows might refuse your certificate after it expires."));
+        sb.Append(CreateHelpField(nameof(MsiCodeSignEmbedded), MsiCodeSignEmbedded, style,
+            $"Boolean (true or false) which specifies whether to sign all embedded files (your program files) in addition to the MSi itself",
+            $"This will sign all files in-place if they're not already signed, so use this with caution"));
+        sb.Append(CreateHelpField(nameof(MsiSignToolLocation), MsiSignToolLocation, style,
+            $"Semicolon (;) separated list of folders to search for signtool.exe.",
+            $"If not provided it is assumed to be in PATH"));
+        sb.Append(CreateHelpField(nameof(MsiSignToolExtraArguments), MsiSignToolExtraArguments, style,
+            $"Extra arguments to pass to signtool.exe when signing the MSI and embedded files."));
 
         return sb.ToString().Trim().ReplaceLineEndings("\n");
     }

@@ -18,6 +18,8 @@
 
 // MsiBuilder created by Julian Rossbach (httpS://github.com/Juff-Ma).
 
+using System.Text;
+
 namespace KuiperZone.PupNet.Builders;
 
 /// <summary>
@@ -74,4 +76,124 @@ public class MsiBuilder : PackageBuilder
     public override bool SupportsStartCommand => true;
 
     public override bool SupportsPostRun => false;
+
+    /// <summary>
+    /// Path to RTF license file in build directory, or null if no license file specified.
+    /// </summary>
+    private string? RtfLicensePath => 
+        Configuration.AppLicenseFile is null
+        ? null
+        : Path.Combine(BuildAppBin, Path.GetFileNameWithoutExtension(Configuration.AppLicenseFile));
+
+    public override void Create(string? desktop, string? metainfo)
+    {
+        base.Create(desktop, metainfo);
+
+        if (Configuration.StartCommand is not null &&
+            !Configuration.StartCommand.Equals(AppExecName, StringComparison.InvariantCultureIgnoreCase))
+        {
+            var path = Path.Combine(BuildAppBin, Configuration.StartCommand + ".bat");
+            var script = $"start {InstallExec} %*";
+            Operations.WriteFile(path, script);
+        }
+
+        if (RtfLicensePath is {} licensePath)
+        {
+            var content = Operations.ReadFile(Configuration.AppLicenseFile)!;
+            var rtf = GetRtfFromTxt(content);
+
+            Operations.WriteFile(licensePath, rtf);
+        }
+    }
+
+    /// <summary>
+    /// This converts plain text to RTF format.
+    /// This is a very basic conversion using only the most basic RTF syntax.
+    /// </summary>
+    private static string GetRtfFromTxt(string text)
+    {
+        text = text.Replace("\\", "\\\\")
+                     .Replace("{", "\\{")
+                     .Replace("}", "\\}")
+                     .Replace("\r", "")
+                     .Replace("\n", "\\line ");
+
+        return $$"""
+                {\rtf\ansi
+                {{text}}
+                }
+                """;
+    }
+
+    private string GetMsiConfig()
+    {
+        return ""; //TODO: implement MSI config generation
+    }
+
+    private string GetGuid()
+    {
+        // Just a constant namespace for generating the MSI UUID so that it's stable across builds
+        // If this is ever changed and the user doesn't provide their own UUID, it will result in a different
+        // product code and thus a different installation.
+        const string NAMESPACE = "2754bd46-1ef3-467b-b72a-aaa778a62bbb";
+
+        return Configuration.MsiUuid ?? 
+               GenerateV5Uuid(Guid.Parse(NAMESPACE),
+                       $"{Configuration.PublisherId}_{Configuration.AppId}")
+                   .ToString();
+    }
+
+    /// <summary>
+    /// Generates a Version 5 UUID based on namespace and name.
+    /// This is used to generate a UUID for the MSI package if the user has not specified one.
+    /// </summary>
+    /// <param name="namespace">UUID which sets the scope of the generated v5 UUID.</param>
+    /// <param name="name">The name to be hashed and incorporated unto the generated UUID.</param>
+    /// <remarks>
+    /// Code courtesy of Elephant.Uuidv5 (https://github.com/S-Elephant/Elephant.NuGets/blob/master/Elephant.Uuidv5/Uuidv5Utils.cs)
+    /// Licensed under MIT, Copyright (c) 2022 SquirtingElephant
+    /// </remarks>
+    private Guid GenerateV5Uuid(Guid @namespace, string name)
+    {
+        byte[] nameBytes = Encoding.UTF8.GetBytes(name);
+        byte[] namespaceBytes = @namespace.ToByteArray();
+
+        SwapByteOrder(namespaceBytes);
+
+        using var sha1 = System.Security.Cryptography.SHA1.Create();
+
+        sha1.TransformBlock(namespaceBytes, 0, namespaceBytes.Length, null, 0);
+        sha1.TransformFinalBlock(nameBytes, 0, nameBytes.Length);
+
+        var result = new byte[16];
+
+        Array.Copy(sha1.Hash!, 0, result,0 , 16);
+
+        result[6] = (byte)((result[6] & 0x0F) | (5 << 4));
+        result[8] = (byte)((result[8] & 0x3F) | 0x80);
+
+        SwapByteOrder(result);
+
+        return new(result);
+    }
+
+    /// <summary>
+    /// Swaps the byte order of a GUID to conform to RFC 4122.
+    /// </summary>
+    /// <param name="guidBytes">Byte array representing the GUID to have its byte order swapped.</param>
+    /// /// <remarks>
+    /// Code courtesy of Elephant.Uuidv5 (https://github.com/S-Elephant/Elephant.NuGets/blob/master/Elephant.Uuidv5/Uuidv5Utils.cs)
+    /// Licensed under MIT, Copyright (c) 2022 SquirtingElephant
+    /// </remarks>
+    private static void SwapByteOrder(byte[] guidBytes)
+    {
+        // Reverse the first 4 bytes.
+        Array.Reverse(guidBytes, 0, 4);
+
+        // Reverse the 5th and 6th bytes.
+        Array.Reverse(guidBytes, 4, 2);
+
+        // Reverse the 7th and 8th bytes.
+        Array.Reverse(guidBytes, 6, 2);
+    }
 }

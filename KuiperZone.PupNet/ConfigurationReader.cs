@@ -213,6 +213,7 @@ public class ConfigurationReader
         MsiCodeSignCertPassword = GetOptional(nameof(MsiCodeSignCertPassword), ValueFlags.None);
         MsiCodeSignDescription = GetOptional(nameof(MsiCodeSignDescription), ValueFlags.Safe);
         MsiCodeSignStore = GetOptional(nameof(MsiCodeSignStore), ValueFlags.SafeNoSpace);
+        MsiCodeSignAlgorithm = GetOptional(nameof(MsiCodeSignAlgorithm), ValueFlags.SafeNoSpace);
         MsiCodeSignTimestampUrl = GetOptional(nameof(MsiCodeSignTimestampUrl), ValueFlags.SafeNoSpace);
         MsiCodeSignEmbedded = GetBool(nameof(MsiCodeSignEmbedded), MsiCodeSignEmbedded);
         MsiSignToolLocation = GetOptional(nameof(MsiSignToolLocation), ValueFlags.Safe);
@@ -337,6 +338,7 @@ public class ConfigurationReader
     public string? MsiCodeSignCertPassword { get; }
     public string? MsiCodeSignDescription { get; }
     public string? MsiCodeSignStore { get; } 
+    public string? MsiCodeSignAlgorithm { get; }
     public string? MsiCodeSignTimestampUrl { get; }
     public bool MsiCodeSignEmbedded { get; }
     public string? MsiSignToolLocation { get; }
@@ -757,6 +759,9 @@ public class ConfigurationReader
         sb.Append(CreateHelpField(nameof(MsiCodeSignStore), MsiCodeSignStore, style,
             $"This determines where to find the certificate.",
             $"May be 'pfx' for PFX files, 'name' for common name ID or 'sha1' for their hash ID."));
+        sb.Append(CreateHelpField(nameof(MsiCodeSignAlgorithm), MsiCodeSignAlgorithm, style,
+            $"This determines the certificate hashing algorithm.",
+            $"'sha256' by default or optionally 'sha1'."));
         sb.Append(CreateHelpField(nameof(MsiCodeSignTimestampUrl), MsiCodeSignTimestampUrl, style,
             $"URL of the timestamp server to use when code signing the MSI.",
             "If you omit this, signing will still work but Windows might refuse your certificate after it expires."));

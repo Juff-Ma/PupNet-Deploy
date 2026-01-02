@@ -41,9 +41,21 @@ public class MsiBuilder : PackageBuilder
         InstallBin = "";
 
         ManifestBuildPath = Path.Combine(Root, Configuration.AppBaseName + ".msi.toml");
-        // TODO: set ManifestContent based on configuration
+        ManifestContent = GetMsiConfig();
 
-        // TODO: set PackageCommands based on configuration
+        string buildCommand = $"simplemsi build -c \"{ManifestBuildPath}\" -o \"{OutputPath}\"";
+
+        if (Configuration.MsiCodeSignCertPassword is not null)
+        {
+            buildCommand +=
+                $" --certificate-password \"{Configuration.MsiCodeSignCertPassword}\"";
+        }
+
+        PackageCommands =
+            [
+                buildCommand
+            ];
+
     }
 
     public override string PackageArch
@@ -127,7 +139,82 @@ public class MsiBuilder : PackageBuilder
 
     private string GetMsiConfig()
     {
-        return ""; //TODO: implement MSI config generation
+        StringBuilder sb = new();
+
+        sb.AppendLine($"[general]");
+        sb.AppendLine($"guid = \"{GetGuid()}\"");
+        sb.AppendLine($"name = \"{Configuration.AppBaseName}\"");
+        sb.AppendLine($"platform = \"{PackageArch}\"");
+        // we use PackageRelease here since the fourth part of the version is the microsoft recommended way to include revision data
+        // since we include the fourth part, we set allow_same_version_upgrades = true so packages can upgrade on revision
+        sb.AppendLine($"version = \"{AppVersion}.{PackageRelease}\"");
+        sb.AppendLine("allow_same_version_upgrades = true");
+        sb.AppendLine($"install_scope = \"{(Configuration.MsiMachineInstall ? "machine" : "user")}\"");
+        sb.AppendLine("ui_mode = \"full\""); // use full ui including license page and installation folder selection
+
+        sb.AppendLine("[meta]");
+        sb.AppendLine($"display_name = \"{Configuration.AppFriendlyName}\"");
+        sb.AppendLine($"description = \"{Configuration.AppShortSummary}\""); // Even though this is called description, the MSI expects a short text
+        sb.AppendLine($"author = \"{Configuration.PublisherName}\"");
+
+        if (RtfLicensePath is not null)
+        {
+            sb.AppendLine($"license_file = \"{RtfLicensePath}\"");
+        }
+
+        if (PrimaryIcon is not null)
+        {
+            sb.AppendLine($"product_icon = \"{PrimaryIcon}\"");
+        }
+
+        if (Configuration.PublisherLinkUrl is not null)
+        {
+            sb.AppendLine($"about_url = \"{Configuration.PublisherLinkUrl}\"");
+        }
+
+        sb.AppendLine($"hide_program_entry = {Configuration.MsiHideProgramEntry.ToString().ToLowerInvariant()}");
+
+        sb.AppendLine("[install]");
+        sb.AppendLine($"source_dirs = [\"{BuildAppBin}\\*.*\"]");
+
+        if (Configuration.MsiCodeSignCertName is not null)
+        {
+            sb.AppendLine("[install.signing]");
+            sb.AppendLine($"cert_name = \"{Configuration.MsiCodeSignCertName}\"");
+            
+            if (Configuration.MsiCodeSignDescription is not null)
+                sb.AppendLine($"description = \"{Configuration.MsiCodeSignDescription}\"");
+            if (Configuration.MsiCodeSignTimestampUrl is not null)
+                sb.AppendLine($"time_url = \"{Configuration.MsiCodeSignTimestampUrl}\"");
+            if (Configuration.MsiCodeSignStore is not null)
+                sb.AppendLine($"store_type = \"{Configuration.MsiCodeSignStore}\"");
+            if (Configuration.MsiCodeSignAlgorithm is not null)
+                sb.AppendLine($"algorithm = \"{Configuration.MsiCodeSignAlgorithm}\"");
+
+            sb.AppendLine($"sign_embedded = \"{Configuration.MsiCodeSignEmbedded.ToString().ToLowerInvariant()}\"");
+
+            if (Configuration.MsiSignToolLocation is not null)
+                sb.AppendLine($"signtool_location = \"{Configuration.MsiSignToolLocation}\"");
+            if (Configuration.MsiSignToolExtraArguments is not null)
+                sb.AppendLine($"extra_arguments = \"{Configuration.MsiSignToolExtraArguments}\"");
+        }
+
+        if (Configuration.StartCommand is not null)
+        {
+            sb.AppendLine("[[install.env_vars]]");
+            sb.AppendLine("name = \"PATH\"");
+            sb.AppendLine("value = \"@\""); // @ is the installation directory
+            sb.AppendLine("part = \"suffix\"");
+        }
+
+        if (!Configuration.DesktopNoDisplay)
+        {
+            sb.AppendLine("[[install.shortcuts]]"); 
+            sb.AppendLine($"target = \"{AppExecName}\"");
+            sb.AppendLine($"name = \"{Configuration.AppFriendlyName}\"");
+        }
+
+        return sb.ToString().Replace("\\", "\\\\"); // TOML expects backslashes to be escaped
     }
 
     private string GetGuid()

@@ -200,6 +200,29 @@ public class FileOps(string? root = null)
     }
 
     /// <summary>
+    /// Reads file content. Returns null if path is null.
+    /// </summary>
+    public string? ReadFile(string? path)
+    {
+        if (!string.IsNullOrEmpty(path))
+        {
+            try
+            {
+                Write("Reading File: ", path);
+                var content =  File.ReadAllText(path);
+                WriteLine(" ... OK");
+                return content;
+            }
+            catch
+            {
+                WriteLine(" ... FAILED");
+                throw;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Zips the directory and writes to output.
     /// </summary>
     public void Zip(string? directory, string? output)

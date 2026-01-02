@@ -116,6 +116,20 @@ public class PackageBuilderTest
     }
 
     [Fact]
+    public void Msi_DecodesOK()
+    {
+        var builder = new MsiBuilder(new DummyConf());
+
+        Assert.False(builder.IsLinuxExclusive);
+        Assert.True(builder.IsWindowsExclusive);
+        AssertOK(builder, PackageKind.Msi);
+        Assert.Null(builder.MetaBuildPath);
+
+        Assert.StartsWith("HelloWorldInstall-5.4.3-2.", builder.OutputName);
+        Assert.EndsWith(".msi", builder.OutputName);
+    }
+
+    [Fact]
     public void Zip_DecodesOK()
     {
         var builder = new ZipBuilder(new DummyConf());

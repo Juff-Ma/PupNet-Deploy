@@ -107,6 +107,20 @@ public class DummyConf : ConfigurationReader
         lines.Add($"{nameof(SetupVersionOutput)} = true");
         lines.Add($"{nameof(SetupUninstallScript)} = uninstall.bat");
 
+        lines.Add($"{nameof(MsiUuid)} = 2754bd46-1ef3-467b-b72a-aaa778a62bbb");
+        lines.Add($"{nameof(MsiMachineInstall)} = true");
+        lines.Add($"{nameof(MsiSuffixOutput)} = Install");
+        lines.Add($"{nameof(MsiVersionOutput)} = true");
+        lines.Add($"{nameof(MsiCodeSignCertName)} = \"MyCert.pfx\"");
+        lines.Add($"{nameof(MsiCodeSignCertPassword)} = \"v3rys3cur3\"");
+        lines.Add($"{nameof(MsiCodeSignDescription)} = \"MyCompany MyApp\"");
+        lines.Add($"{nameof(MsiCodeSignStore)} = pfx");
+        lines.Add($"{nameof(MsiCodeSignAlgorithm)} = sha256");
+        lines.Add($"{nameof(MsiCodeSignTimestampUrl)} = \"http://timestamp.sectigo.com\"");
+        lines.Add($"{nameof(MsiCodeSignEmbedded)} = true");
+        lines.Add($"{nameof(MsiSignToolLocation)} = \"C:/Program Files (x86)/Windows Kits/10/bin/10.0.22621.0/x64/\"");
+        lines.Add($"{nameof(MsiSignToolExtraArguments)} = \"/sm\"");
+
         Remove(lines, omit);
 
         return lines.ToArray();

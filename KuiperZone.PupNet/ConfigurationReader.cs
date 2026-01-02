@@ -83,7 +83,7 @@ public class ConfigurationReader
             SetupSuffixOutput = "Setup";
             SetupVersionOutput = true;
             SetupUninstallScript = "uninstall.bat";
-            MsiUuid = "cdd3abd4-3076-4d81-b531-339d7ad8b320";
+            MsiUuid = "2754bd46-1ef3-467b-b72a-aaa778a62bbb";
             MsiMachineInstall = true;
             MsiSuffixOutput = "Install";
             MsiVersionOutput = true;
@@ -91,6 +91,7 @@ public class ConfigurationReader
             MsiCodeSignCertPassword = "v3rys3cur3";
             MsiCodeSignDescription = "MyCompany MyApp";
             MsiCodeSignStore = "pfx";
+            MsiCodeSignAlgorithm = "sha256";
             MsiCodeSignTimestampUrl = "http://timestamp.acs.microsoft.com";
             MsiCodeSignEmbedded = true;
             MsiSignToolLocation = "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.22621.0\\x64\\";

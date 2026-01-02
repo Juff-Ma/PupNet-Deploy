@@ -222,6 +222,7 @@ public class MsiBuilder : PackageBuilder
         // Just a constant namespace for generating the MSI UUID so that it's stable across builds
         // If this is ever changed and the user doesn't provide their own UUID, it will result in a different
         // product code and thus a different installation.
+        // This is also the UUID used by PupNet in all demos/examples for itself.
         const string NAMESPACE = "2754bd46-1ef3-467b-b72a-aaa778a62bbb";
 
         return Configuration.MsiUuid ?? 
